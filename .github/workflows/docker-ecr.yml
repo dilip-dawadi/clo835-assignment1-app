@@ -19,20 +19,22 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login \
-            --username AWS \
-            --password-stdin \
-            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build & Push Web App
         run: |
+          ECR="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
           docker build -t clo835-webapp ./app
-          docker tag clo835-webapp:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/clo835-webapp:latest
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/clo835-webapp:latest
+          docker tag clo835-webapp:latest $ECR/clo835-webapp:latest
+          docker tag clo835-webapp:latest $ECR/clo835-webapp:${{ github.sha }}
+          docker push $ECR/clo835-webapp:latest
+          docker push $ECR/clo835-webapp:${{ github.sha }}
 
       - name: Build & Push MySQL
         run: |
+          ECR="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
           docker build -t clo835-mysql ./mysql
-          docker tag clo835-mysql:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/clo835-mysql:latest
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/clo835-mysql:latest
+          docker tag clo835-mysql:latest $ECR/clo835-mysql:latest
+          docker tag clo835-mysql:latest $ECR/clo835-mysql:${{ github.sha }}
+          docker push $ECR/clo835-mysql:latest
+          docker push $ECR/clo835-mysql:${{ github.sha }}
